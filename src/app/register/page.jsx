@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function Loginform() {
+  const router=useRouter()
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState({
@@ -10,6 +12,9 @@ export default function Loginform() {
     email: false,
     password: false,
   });
+
+  const [err,setErr]=useState('')
+  const [loading, setLoading]=useState(false)
   const [submitted, setSubmitted] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,6 +31,7 @@ export default function Loginform() {
   const formIsValid = emailIsValid && passwordIsValid;
 
   async function handleSubmit(e) {
+    setLoading(true)
     // prevent default submit
     e.preventDefault();
     setTouched({ email: true, password: true });
@@ -40,7 +46,7 @@ export default function Loginform() {
 
     // submit to API
     const res= await fetch(`${process.env.NEXT_PUBLIC_BASE_API}/register`,{
-      type:"POST",
+      method:"POST",
       headers:{
         "Content-Type":"application/json"
       },
@@ -48,11 +54,25 @@ export default function Loginform() {
     })
     // convert the API response back to object
     const data=await res.json()
+    
 
     console.log(data)
+    console.log(res)
+
+    if(res.status===200){
+      setLoading(false)
+      // route to login page
+      router.replace('/login')
+    }
+
+    else if(res.status===400 || res.status==500){
+      setErr("Something went wrong")
+      loading(false)
+    }
   }
 
  return (
+
   <div>
       {submitted ? (
         <div className="mb-4 p-4 rounded bg-green-50 text-green-800 border border-green-100">
@@ -127,7 +147,8 @@ export default function Loginform() {
                   : "bg-gray-500 cursor-not-allowed text-black"
               }`}
             >
-              Login
+              { loading ? (<span>Please wait....</span>) : (<span>Login</span>)}
+              
             </button>
           </div>
         </div>
